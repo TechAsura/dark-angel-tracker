@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dark Angel Blueprint — Progress Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --void: #080810; --deep: #0d0d1a; --surface: #12121f; --card: #16162a;
+    --border: #2a2a4a; --purple: #7c3aed; --violet: #a855f7; --lavender: #c084fc;
+    --rose: #f43f5e; --mist: #94a3b8; --light: #e2e8f0;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--void); color: var(--light); font-family: 'Cormorant Garamond', serif; min-height: 100vh; overflow-x: hidden; }
+  body::before { content: ''; position: fixed; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(ellipse at 20% 20%, rgba(124,58,237,0.08) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(168,85,247,0.06) 0%, transparent 50%); pointer-events: none; z-index: 0; }
+  .container { max-width: 900px; margin: 0 auto; padding: 40px 20px; position: relative; z-index: 1; }
+  .header { text-align: center; margin-bottom: 60px; }
+  .header::after { content: ''; display: block; width: 200px; height: 1px; background: linear-gradient(90deg, transparent, var(--purple), transparent); margin: 30px auto 0; }
+  .header-title { font-family: 'Cinzel Decorative', serif; font-size: clamp(20px, 4vw, 32px); font-weight: 700; color: var(--light); letter-spacing: 0.05em; }
+  .header-sub { font-family: 'Cormorant Garamond', serif; font-size: 16px; color: var(--violet); font-style: italic; margin-top: 8px; letter-spacing: 0.1em; }
+  .section-title { font-family: 'Cinzel Decorative', serif; font-size: 13px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--violet); margin-bottom: 20px; display: flex; align-items: center; gap: 12px; }
+  .section-title::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, var(--border), transparent); }
+  .log-form { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 32px; margin-bottom: 40px; position: relative; overflow: hidden; }
+  .log-form::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--purple), var(--violet), transparent); }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .field { display: flex; flex-direction: column; gap: 8px; }
+  .field label { font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--mist); }
+  .field input, .field textarea { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; color: var(--light); font-family: 'Cormorant Garamond', serif; font-size: 16px; outline: none; transition: border-color 0.2s, box-shadow 0.2s; width: 100%; }
+  .field input:focus, .field textarea:focus { border-color: var(--purple); box-shadow: 0 0 0 3px rgba(124,58,237,0.15); }
+  .field textarea { resize: none; height: 80px; line-height: 1.5; }
+  .habits-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+  .habit-check { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: all 0.2s; user-select: none; }
+  .habit-check:hover { border-color: var(--purple); }
+  .habit-check input[type="checkbox"] { appearance: none; width: 18px; height: 18px; border: 1.5px solid var(--border); border-radius: 4px; background: var(--deep); cursor: pointer; flex-shrink: 0; position: relative; transition: all 0.2s; }
+  .habit-check input[type="checkbox"]:checked { background: var(--purple); border-color: var(--purple); }
+  .habit-check input[type="checkbox"]:checked::after { content: '✓'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 11px; font-weight: bold; }
+  .habit-check.checked { border-color: rgba(124,58,237,0.4); background: rgba(124,58,237,0.08); }
+  .habit-label { font-size: 14px; color: var(--mist); }
+  .habit-check.checked .habit-label { color: var(--light); }
+  .btn-log { width: 100%; padding: 16px; background: linear-gradient(135deg, var(--purple), var(--violet)); border: none; border-radius: 10px; color: white; font-family: 'Cinzel Decorative', serif; font-size: 13px; letter-spacing: 0.1em; cursor: pointer; transition: all 0.2s; margin-top: 8px; }
+  .btn-log:hover { transform: translateY(-1px); box-shadow: 0 8px 25px rgba(124,58,237,0.4); }
+  .btn-log:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 40px; }
+  .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; text-align: center; transition: border-color 0.2s; }
+  .stat-card:hover { border-color: var(--purple); }
+  .stat-value { font-family: 'Cinzel Decorative', serif; font-size: 22px; color: var(--violet); margin-bottom: 4px; }
+  .stat-label { font-family: 'Space Mono', monospace; font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--mist); }
+  .stat-delta { font-size: 12px; margin-top: 4px; }
+  .delta-pos { color: #4ade80; }
+  .delta-neg { color: var(--rose); }
+  .streak-bar { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px 28px; margin-bottom: 40px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+  .streak-item { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .streak-number { font-family: 'Cinzel Decorative', serif; font-size: 28px; background: linear-gradient(135deg, var(--purple), var(--lavender)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .streak-label { font-family: 'Space Mono', monospace; font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--mist); }
+  .streak-divider { width: 1px; height: 40px; background: var(--border); }
+  .log-list { display: flex; flex-direction: column; gap: 16px; }
+  .log-entry { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; transition: border-color 0.2s; animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .log-entry:hover { border-color: rgba(124,58,237,0.4); }
+  .log-entry-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+  .log-date { font-family: 'Cinzel Decorative', serif; font-size: 13px; color: var(--violet); }
+  .log-week { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--mist); margin-top: 3px; }
+  .log-metrics { display: flex; gap: 20px; flex-wrap: wrap; }
+  .log-metric { display: flex; flex-direction: column; gap: 2px; }
+  .log-metric-label { font-family: 'Space Mono', monospace; font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--mist); }
+  .log-metric-value { font-size: 18px; color: var(--light); font-weight: 600; }
+  .log-habits { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+  .habit-tag { padding: 3px 10px; border-radius: 20px; font-size: 12px; font-style: italic; }
+  .habit-tag.done { background: rgba(124,58,237,0.2); color: var(--lavender); border: 1px solid rgba(124,58,237,0.3); }
+  .habit-tag.missed { background: rgba(244,63,94,0.1); color: rgba(244,63,94,0.6); border: 1px solid rgba(244,63,94,0.2); }
+  .log-note { margin-top: 12px; font-size: 15px; font-style: italic; color: var(--mist); line-height: 1.6; border-left: 2px solid var(--border); padding-left: 12px; }
+  .btn-delete { background: none; border: 1px solid rgba(244,63,94,0.3); color: rgba(244,63,94,0.5); border-radius: 6px; padding: 4px 10px; font-size: 11px; cursor: pointer; transition: all 0.2s; font-family: 'Space Mono', monospace; }
+  .btn-delete:hover { border-color: var(--rose); color: var(--rose); background: rgba(244,63,94,0.1); }
+  .empty { text-align: center; padding: 60px 20px; color: var(--mist); }
+  .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
+  .empty-text { font-style: italic; font-size: 18px; }
+  .loading { text-align: center; padding: 40px; color: var(--mist); font-style: italic; }
+  .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--card); border: 1px solid var(--purple); border-radius: 10px; padding: 14px 24px; font-style: italic; color: var(--lavender); font-size: 15px; transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); z-index: 100; pointer-events: none; white-space: nowrap; }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .winter-arc { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 28px 32px; margin-bottom: 40px; position: relative; overflow: hidden; text-align: center; }
+  .winter-arc::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, #1a6b8a, #4fc3f7, #1a6b8a, transparent); }
+  .winter-arc-title { font-family: 'Cinzel Decorative', serif; font-size: 11px; letter-spacing: 0.25em; text-transform: uppercase; color: #4fc3f7; margin-bottom: 16px; }
+  .winter-arc-main { display: flex; align-items: center; justify-content: center; gap: 40px; flex-wrap: wrap; margin-bottom: 20px; }
+  .arc-stat { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .arc-number { font-family: 'Cinzel Decorative', serif; font-size: 42px; background: linear-gradient(135deg, #4fc3f7, #a5f3fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1; }
+  .arc-label { font-family: 'Space Mono', monospace; font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--mist); }
+  .arc-divider { width: 1px; height: 50px; background: var(--border); }
+  .arc-phase { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-style: italic; color: #a5f3fc; margin-bottom: 16px; }
+  .arc-progress-track { width: 100%; height: 4px; background: var(--border); border-radius: 4px; overflow: hidden; margin-bottom: 6px; }
+  .arc-progress-fill { height: 100%; background: linear-gradient(90deg, #1a6b8a, #4fc3f7); border-radius: 4px; transition: width 1s ease; }
+  .arc-progress-label { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--mist); margin-bottom: 16px; }
+  .arc-date-row { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; }
+  .arc-date-label { font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 0.1em; color: var(--mist); text-transform: uppercase; }
+  .arc-date-input { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; color: var(--light); font-family: 'Space Mono', monospace; font-size: 12px; outline: none; transition: border-color 0.2s; }
+  .arc-date-input:focus { border-color: #4fc3f7; }
+  @media (max-width: 600px) { .form-grid, .form-grid-3 { grid-template-columns: 1fr; } .habits-grid { grid-template-columns: 1fr; } .stats-row { grid-template-columns: repeat(2, 1fr); } }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="header-title">🖤 Dark Angel Blueprint</div>
+    <div class="header-sub">Progress Chronicle</div>
+  </div>
+
+  <div class="winter-arc">
+    <div class="winter-arc-title">🐛 Winter Arc — The Cocoon Phase</div>
+    <div class="winter-arc-main">
+      <div class="arc-stat"><div class="arc-number" id="arcDaysLeft">—</div><div class="arc-label">Days Remaining</div></div>
+      <div class="arc-divider"></div>
+      <div class="arc-stat"><div class="arc-number" id="arcDaysIn">—</div><div class="arc-label">Days In</div></div>
+      <div class="arc-divider"></div>
+      <div class="arc-stat"><div class="arc-number" id="arcTotal">—</div><div class="arc-label">Total Days</div></div>
+    </div>
+    <div class="arc-phase" id="arcPhase">Set your emergence date below</div>
+    <div class="arc-progress-track"><div class="arc-progress-fill" id="arcProgressFill" style="width:0%"></div></div>
+    <div class="arc-progress-label" id="arcProgressLabel">awaiting emergence date</div>
+    <div class="arc-date-row">
+      <span class="arc-date-label">Emergence Date:</span>
+      <input type="date" class="arc-date-input" id="arcEndDate" oninput="saveArcDate()">
+    </div>
+  </div>
+
+  <div class="streak-bar">
+    <div class="streak-item"><div class="streak-number" id="totalLogs">—</div><div class="streak-label">Days Logged</div></div>
+    <div class="streak-divider"></div>
+    <div class="streak-item"><div class="streak-number" id="currentStreak">—</div><div class="streak-label">Day Streak</div></div>
+    <div class="streak-divider"></div>
+    <div class="streak-item"><div class="streak-number" id="avgSleep">—</div><div class="streak-label">Avg Sleep (hrs)</div></div>
+    <div class="streak-divider"></div>
+    <div class="streak-item"><div class="streak-number" id="avgHabits">—</div><div class="streak-label">Avg Habits / Day</div></div>
+  </div>
+
+  <div class="section-title">Current Metrics</div>
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-value" id="latestWeight">—</div><div class="stat-label">Weight (kg)</div><div class="stat-delta" id="deltaWeight"></div></div>
+    <div class="stat-card"><div class="stat-value" id="latestBF">—</div><div class="stat-label">Body Fat %</div><div class="stat-delta" id="deltaBF"></div></div>
+    <div class="stat-card"><div class="stat-value" id="latestMM">—</div><div class="stat-label">Muscle Mass (kg)</div><div class="stat-delta" id="deltaMM"></div></div>
+    <div class="stat-card"><div class="stat-value" id="latestWater">—</div><div class="stat-label">Body Water %</div><div class="stat-delta" id="deltaWater"></div></div>
+  </div>
+
+  <div class="section-title">Log Today</div>
+  <div class="log-form">
+    <div class="form-grid">
+      <div class="field"><label>Date</label><input type="date" id="inputDate"></div>
+      <div class="field"><label>Sleep (hours)</label><input type="number" id="inputSleep" min="0" max="12" step="0.5" placeholder="e.g. 7"></div>
+    </div>
+    <div class="form-grid-3">
+      <div class="field"><label>Weight (kg)</label><input type="number" id="inputWeight" step="0.01" placeholder="e.g. 66.45"></div>
+      <div class="field"><label>Body Fat %</label><input type="number" id="inputBF" step="0.1" placeholder="e.g. 15.3"></div>
+      <div class="field"><label>Muscle Mass (kg)</label><input type="number" id="inputMM" step="0.01" placeholder="e.g. 53.50"></div>
+    </div>
+    <div class="form-grid-3">
+      <div class="field"><label>Body Water %</label><input type="number" id="inputWater" step="0.1" placeholder="e.g. 61.3"></div>
+      <div class="field"><label>Calories eaten</label><input type="number" id="inputCalories" placeholder="e.g. 1887"></div>
+      <div class="field"><label>Protein (g)</label><input type="number" id="inputProtein" placeholder="e.g. 131"></div>
+    </div>
+    <div class="section-title" style="margin-top:8px;">Habits</div>
+    <div class="habits-grid">
+      <label class="habit-check"><input type="checkbox" data-habit="sleep7" onchange="toggleHabit(this)"><span class="habit-label">🌙 7+ hours sleep</span></label>
+      <label class="habit-check"><input type="checkbox" data-habit="skincare" onchange="toggleHabit(this)"><span class="habit-label">✨ Skincare AM + PM</span></label>
+      <label class="habit-check"><input type="checkbox" data-habit="protein" onchange="toggleHabit(this)"><span class="habit-label">🥩 Hit protein target</span></label>
+      <label class="habit-check"><input type="checkbox" data-habit="calories" onchange="toggleHabit(this)"><span class="habit-label">🍽 Hit calorie target</span></label>
+      <label class="habit-check"><input type="checkbox" data-habit="trained" onchange="toggleHabit(this)"><span class="habit-label">💪 Trained / walked</span></label>
+      <label class="habit-check"><input type="checkbox" data-habit="magnesium" onchange="toggleHabit(this)"><span class="habit-label">💊 Magnesium glycinate</span></label>
+      <label class="habit-check"><input type="checkbox" data-habit="nophone" onchange="toggleHabit(this)"><span class="habit-label">📵 Phone down by 11pm</span></label>
+      <label class="habit-check"><input type="checkbox" data-habit="hydrated" onchange="toggleHabit(this)"><span class="habit-label">💧 Stayed hydrated</span></label>
+    </div>
+    <div class="field"><label>Notes / How you felt</label><textarea id="inputNote" placeholder="Energy levels, mood, visible changes..."></textarea></div>
+    <button class="btn-log" id="btnLog" onclick="saveEntry()">— Chronicle This Day —</button>
+  </div>
+
+  <div class="section-title">Chronicle</div>
+  <div id="logList"><div class="loading">Loading chronicle...</div></div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+const API = '';
+const HABITS = { sleep7:'🌙 Sleep 7+', skincare:'✨ Skincare', protein:'🥩 Protein', calories:'🍽 Calories', trained:'💪 Trained', magnesium:'💊 Magnesium', nophone:'📵 No Phone', hydrated:'💧 Hydrated' };
+let entries = [];
+document.getElementById('inputDate').value = new Date().toISOString().split('T')[0];
+
+const ARC_START = '2026-03-01';
+const ARC_KEY = 'winterArcEnd';
+
+function saveArcDate() {
+  const val = document.getElementById('arcEndDate').value;
+  if (val) { localStorage.setItem(ARC_KEY, val); renderArc(); }
+}
+
+function renderArc() {
+  const stored = localStorage.getItem(ARC_KEY);
+  const input = document.getElementById('arcEndDate');
+  if (stored && !input.value) input.value = stored;
+  const endDate = stored || input.value;
+  if (!endDate) return;
+  const start = new Date(ARC_START + 'T12:00:00');
+  const end = new Date(endDate + 'T12:00:00');
+  const today = new Date(); today.setHours(12,0,0,0);
+  const totalDays = Math.round((end - start) / 86400000);
+  const daysIn = Math.max(0, Math.round((today - start) / 86400000));
+  const daysLeft = Math.max(0, Math.round((end - today) / 86400000));
+  const pct = Math.min(100, Math.round((daysIn / totalDays) * 100));
+  document.getElementById('arcDaysLeft').textContent = daysLeft;
+  document.getElementById('arcDaysIn').textContent = daysIn;
+  document.getElementById('arcTotal').textContent = totalDays;
+  document.getElementById('arcProgressFill').style.width = pct + '%';
+  document.getElementById('arcProgressLabel').textContent = pct + '% through the transformation';
+  let phase = '';
+  if (today >= end) { phase = '🦋 The butterfly has emerged.'; document.getElementById('arcProgressFill').style.background = 'linear-gradient(90deg, #7c3aed, #a855f7)'; }
+  else if (pct < 25) { phase = 'The cocoon is forming. Stay in the dark.'; }
+  else if (pct < 50) { phase = 'Transformation underway. Trust the process.'; }
+  else if (pct < 75) { phase = 'More than halfway. The wings are taking shape.'; }
+  else { phase = 'Almost time. The emergence approaches.'; }
+  document.getElementById('arcPhase').textContent = phase;
+}
+
+async function loadEntries() {
+  try {
+    const res = await fetch(`${API}/api/entries`);
+    entries = await res.json();
+    render();
+  } catch(e) {
+    document.getElementById('logList').innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-text">Could not connect to server.</div></div>`;
+  }
+}
+async function loadStats() {
+  try {
+    const res = await fetch(`${API}/api/stats`);
+    const stats = await res.json();
+    document.getElementById('totalLogs').textContent = stats.total_logs;
+    document.getElementById('avgSleep').textContent = stats.avg_sleep ?? '—';
+    document.getElementById('avgHabits').textContent = stats.avg_habits ?? '—';
+    const today = new Date().toISOString().split('T')[0];
+    const dates = entries.map(e => e.date).sort((a,b) => b.localeCompare(a));
+    let streak = 0, cur = today;
+    for (let d of dates) {
+      if (d === cur) { streak++; const dt = new Date(cur); dt.setDate(dt.getDate()-1); cur = dt.toISOString().split('T')[0]; }
+      else if (d < cur) break;
+    }
+    document.getElementById('currentStreak').textContent = streak;
+    const l = stats.latest, p = stats.previous;
+    setMetric('latestWeight','deltaWeight',l?.weight,p?.weight,' kg',false);
+    setMetric('latestBF','deltaBF',l?.bf,p?.bf,'%',true);
+    setMetric('latestMM','deltaMM',l?.mm,p?.mm,' kg',false);
+    setMetric('latestWater','deltaWater',l?.water,p?.water,'%',false);
+  } catch(e) {}
+}
+function setMetric(id,deltaId,val,prevVal,unit,lowerIsBetter) {
+  const el=document.getElementById(id), dEl=document.getElementById(deltaId);
+  if (val!=null) { el.textContent=val+(unit||''); if (prevVal!=null) { const diff=+(val-prevVal).toFixed(2); const good=lowerIsBetter?diff<0:diff>0; dEl.textContent=(diff>0?'+':'')+diff; dEl.className='stat-delta '+(diff===0?'':good?'delta-pos':'delta-neg'); } } else { el.textContent='—'; dEl.textContent=''; }
+}
+function toggleHabit(cb) { cb.closest('.habit-check').classList.toggle('checked', cb.checked); }
+function getHabits() { const r={}; document.querySelectorAll('[data-habit]').forEach(cb=>{r[cb.dataset.habit]=cb.checked;}); return r; }
+async function saveEntry() {
+  const date = document.getElementById('inputDate').value;
+  if (!date) { showToast('Choose a date first.'); return; }
+  const btn = document.getElementById('btnLog');
+  btn.disabled=true; btn.textContent='Saving...';
+  const entry = { date, sleep:parseFloat(document.getElementById('inputSleep').value)||null, weight:parseFloat(document.getElementById('inputWeight').value)||null, bf:parseFloat(document.getElementById('inputBF').value)||null, mm:parseFloat(document.getElementById('inputMM').value)||null, water:parseFloat(document.getElementById('inputWater').value)||null, calories:parseInt(document.getElementById('inputCalories').value)||null, protein:parseInt(document.getElementById('inputProtein').value)||null, habits:getHabits(), note:document.getElementById('inputNote').value.trim() };
+  try {
+    await fetch(`${API}/api/entries`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(entry)});
+    clearForm(); await loadEntries(); await loadStats(); showToast('Day chronicled. 🖤');
+  } catch(e) { showToast('Failed to save. Check connection.'); }
+  btn.disabled=false; btn.textContent='— Chronicle This Day —';
+}
+async function deleteEntry(id) {
+  try { await fetch(`${API}/api/entries/${id}`,{method:'DELETE'}); await loadEntries(); await loadStats(); showToast('Entry removed.'); }
+  catch(e) { showToast('Failed to delete.'); }
+}
+function clearForm() {
+  ['inputSleep','inputWeight','inputBF','inputMM','inputWater','inputCalories','inputProtein','inputNote'].forEach(id=>document.getElementById(id).value='');
+  document.querySelectorAll('[data-habit]').forEach(cb=>{cb.checked=false;cb.closest('.habit-check').classList.remove('checked');});
+  document.getElementById('inputDate').value=new Date().toISOString().split('T')[0];
+}
+function render() {
+  const list=document.getElementById('logList');
+  if (!entries.length) { list.innerHTML=`<div class="empty"><div class="empty-icon">🖤</div><div class="empty-text">No entries yet. Begin your chronicle.</div></div>`; return; }
+  list.innerHTML=entries.map(e=>{
+    const d=new Date(e.date+'T12:00:00');
+    const dateStr=d.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+    const weekNum=Math.ceil((Math.floor((d-new Date('2026-03-01T12:00:00'))/86400000)+1)/7);
+    const weekLabel=weekNum>0?`Week ${weekNum} of the Blueprint`:'Baseline';
+    const habits=typeof e.habits==='string'?JSON.parse(e.habits):(e.habits||{});
+    const habitDone=Object.entries(habits).filter(([,v])=>v).map(([k])=>`<span class="habit-tag done">${HABITS[k]||k}</span>`).join('');
+    const habitMiss=Object.entries(habits).filter(([,v])=>!v).map(([k])=>`<span class="habit-tag missed">${HABITS[k]||k}</span>`).join('');
+    const metrics=[
+      e.weight?`<div class="log-metric"><div class="log-metric-label">Weight</div><div class="log-metric-value">${e.weight} kg</div></div>`:'',
+      e.bf?`<div class="log-metric"><div class="log-metric-label">Body Fat</div><div class="log-metric-value">${e.bf}%</div></div>`:'',
+      e.mm?`<div class="log-metric"><div class="log-metric-label">Muscle</div><div class="log-metric-value">${e.mm} kg</div></div>`:'',
+      e.sleep?`<div class="log-metric"><div class="log-metric-label">Sleep</div><div class="log-metric-value">${e.sleep}h</div></div>`:'',
+      e.calories?`<div class="log-metric"><div class="log-metric-label">Calories</div><div class="log-metric-value">${e.calories}</div></div>`:'',
+      e.protein?`<div class="log-metric"><div class="log-metric-label">Protein</div><div class="log-metric-value">${e.protein}g</div></div>`:'',
+    ].filter(Boolean).join('');
+    return `<div class="log-entry"><div class="log-entry-header"><div><div class="log-date">${dateStr}</div><div class="log-week">${weekLabel}</div></div><button class="btn-delete" onclick="deleteEntry(${e.id})">remove</button></div>${metrics?`<div class="log-metrics">${metrics}</div>`:''}${(habitDone||habitMiss)?`<div class="log-habits">${habitDone}${habitMiss}</div>`:''}${e.note?`<div class="log-note">"${e.note}"</div>`:''}</div>`;
+  }).join('');
+}
+function showToast(msg) { const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2800); }
+renderArc();
+loadEntries().then(loadStats);
+</script>
+</body>
+</html>

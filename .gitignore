@@ -1,0 +1,7 @@
+data/
+*.db
+*.db.bak
+__pycache__/
+*.pyc
+.env
+SETUP.md
